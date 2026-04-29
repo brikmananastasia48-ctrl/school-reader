@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Проверка скорости чтения</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #667eea;
+        }
+        .text-option {
+            background: #f5f7fa;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-block;
+            border: 2px solid transparent;
+        }
+        .text-option:hover {
+            background: #e0e7ff;
+        }
+        .text-option.selected {
+            border-color: #667eea;
+            background: #c7d2fe;
+        }
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .timer {
+            font-size: 48px;
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .text-display {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            line-height: 1.8;
+            margin: 20px 0;
+            border: 2px solid #e0e7ff;
+        }
+        .result {
+            text-align: center;
+            font-size: 24px;
+            padding: 20px;
+            background: #e0f7fa;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📖 Проверка скорости чтения</h1>
+        
+        <div id="setup">
+            <h3>Выберите класс:</h3>
+            <select id="grade" onchange="showTexts()">
+                <option value="">-- Выберите --</option>
+                <option value="1">1 класс</option>
+                <option value="2">2 класс</option>
+                <option value="3">3 класс</option>
+                <option value="4">4 класс</option>
+            </select>
+
+            <div id="texts" style="margin: 20px 0;">
+                <div class="text-option" onclick="selectText('cat', 35)" data-grade="1">
+                    <div style="font-size: 40px;">🐱</div>
+                    <div>1 класс - Кошка</div>
+                </div>
+                <div class="text-option" onclick="selectText('dog', 36)" data-grade="1">
+                    <div style="font-size: 40px;">🐕</div>
+                    <div>1 класс - Собака</div>
+                </div>
+                <div class="text-option" onclick="selectText('forest', 48)" data-grade="2">
+                    <div style="font-size: 40px;">🌲</div>
+                    <div>2 класс - Лес</div>
+                </div>
+                <div class="text-option" onclick="selectText('seasons', 51)" data-grade="2">
+                    <div style="font-size: 40px;">🍂</div>
+                    <div>2 класс - Времена года</div>
+                </div>
+                <div class="text-option" onclick="selectText('space', 52)" data-grade="3">
+                    <div style="font-size: 40px;">🚀</div>
+                    <div>3 класс - Космос</div>
+                </div>
+                <div class="text-option" onclick="selectText('animals', 49)" data-grade="3">
+                    <div style="font-size: 40px;">🦁</div>
+                    <div>3 класс - Животные</div>
+                </div>
+                <div class="text-option" onclick="selectText('earth', 58)" data-grade="4">
+                    <div style="font-size: 40px;">🌍</div>
+                    <div>4 класс - Земля</div>
+                </div>
+                <div class="text-option" onclick="selectText('science', 48)" data-grade="4">
+                    <div style="font-size: 40px;">🔬</div>
+                    <div>4 класс - Наука</div>
+                </div>
+            </div>
+
+            <button id="startBtn" onclick="startTest()" disabled>🚀 Начать тест</button>
+        </div>
+
+        <div id="reading" class="hidden">
+            <div class="timer" id="timer">00:00</div>
+            <div class="text-display" id="textContent"></div>
+            <div style="text-align: center;">
+                <button onclick="startTimer()" id="readBtn">▶️ Старт</button>
+                <button onclick="stopTimer()" id="stopBtn" disabled>⏹️ Стоп</button>
+                <button onclick="reset()">🔄 Заново</button>
+            </div>
+        </div>
+
+        <div id="result" class="hidden">
+            <div class="result">
+                <div style="font-size: 60px;" id="emoji">🎉</div>
+                <h2>Результат:</h2>
+                <p>Время: <strong id="timeResult">0</strong> сек</p>
+                <p>Скорость: <strong id="speedResult">0</strong> слов/мин</p>
+                <p id="comment"></p>
+            </div>
+            <button onclick="reset()">📝 Новый тест</button>
+        </div>
+    </div>
+
+    <script>
+        const texts = {
+            cat: "У Маши есть кошка. Кошка рыжая и пушистая. Она любит играть с клубком. Кошка спит на диване. Маша любит свою кошку.",
+            dog: "Во дворе живёт собака. Собака большая и добрая. Она охраняет дом. Дети играют с собакой. Собака любит бегать за мячом.",
+            forest: "В лесу растут высокие деревья. Под деревьями живут зайцы и белки. В лесу тихо и спокойно. Птицы поют песни. В лесу много грибов и ягод.",
+            seasons: "В году четыре времени года. Весной тает снег, цветут цветы. Летом жарко, можно купаться. Осенью листья желтеют. Зимой холодно, идёт снег.",
+            space: "Космос — это бескрайнее пространство вокруг Земли. В космосе летают ракеты и спутники. Там есть звёзды и планеты. Космонавты изучают космос.",
+            animals: "В жарких странах живут удивительные животные. Львы — цари зверей. Слоны — самые большие. Жирафы имеют длинную шею. Обезьяны живут на деревьях.",
+            earth: "Земля — это наша планета. Она круглая и вращается вокруг Солнца. На Земле есть материки и океаны. Здесь живут люди, животные и растения.",
+            science: "Наука помогает людям познавать мир. Учёные делают открытия и изобретения. Знания нужны каждому человеку. Чтение книг развивает ум и воображение."
+        };
+
+        let selectedText = null;
+        let wordCount = 0;
+        let seconds = 0;
+        let timer = null;
+
+        function showTexts() {
+            const grade = document.getElementById('grade').value;
+            document.querySelectorAll('.text-option').forEach(el => {
+                el.style.display = el.dataset.grade === grade ? 'inline-block' : 'none';
+                el.classList.remove('selected');
+            });
+            selectedText = null;
+            document.getElementById('startBtn').disabled = true;
+        }
+
+        function selectText(text, words) {
+            selectedText = text;
+            wordCount = words;
+            document.querySelectorAll('.text-option').forEach(el => el.classList.remove('selected'));
+            event.target.closest('.text-option').classList.add('selected');
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function startTest() {
+            if (!selectedText) return;
+            document.getElementById('setup').classList.add('hidden');
+            document.getElementById('reading').classList.remove('hidden');
+            document.getElementById('textContent').innerHTML = '<h3>' + selectedText + '</h3><p>' + texts[selectedText] + '</p>';
+        }
+
+        function startTimer() {
+            document.getElementById('readBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            
+            timer = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('timer').textContent = mins + ':' + secs;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timer);
+            document.getElementById('readBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            
+            const speed = Math.round(wordCount / (seconds / 60));
+            document.getElementById('timeResult').textContent = seconds;
+            document.getElementById('speedResult').textContent = speed;
+            
+            let emoji = '💪', comment = 'Продолжайте тренироваться!';
+            if (speed >= 70) { emoji = '🏆'; comment = 'Отлично! Выше нормы!'; }
+            else if (speed >= 60) { emoji = '🌟'; comment = 'Хорошо! В пределах нормы!'; }
+            else if (speed >= 50) { emoji = '👍'; comment = 'Неплохо!'; }
+            else if (speed >= 40) { emoji = '📚'; comment = 'Читайте больше!'; }
+            
+            document.getElementById('emoji').textContent = emoji;
+            document.getElementById('comment').textContent = comment;
+            
+            document.getElementById('reading').classList.add('hidden');
+            document.getElementById('result').classList.remove('hidden');
+        }
+
+        function reset() {
+            clearInterval(timer);
+            seconds = 0;
+            document.getElementById('timer').textContent = '00:00';
+            document.getElementById('setup').classList.remove('hidden');
+            document.getElementById('reading').classList.add('hidden');
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('readBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+    </script>
+</body>
+</html>
